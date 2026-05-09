@@ -81,7 +81,7 @@ export default function DashboardPage() {
         <KpiCard 
           title="State of Health" 
           value={`${aiSoh}%`}  {/* 👈 NOW USING AI DATA */}
-          subtitle="Optimal condition"
+          subtitle="AI Predicted"
           icon={<ActivitySquare className="w-5 h-5" />} 
           statusColor="blue"
         />
