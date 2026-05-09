@@ -72,11 +72,11 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard 
-          title="State of Charge" 
-          value={`${data.soc}%`} 
-          subtitle={data.remainingTime}
-          icon={<Battery className="w-5 h-5" />} 
-          statusColor={data.soc > 20 ? 'green' : 'red'}
+          title="State of Health" 
+          value={`${aiSoh}%`}
+          subtitle="AI Predicted"
+          icon={<ActivitySquare className="w-5 h-5" />} 
+          statusColor="blue"
         />
         <KpiCard 
           title="State of Health" 
