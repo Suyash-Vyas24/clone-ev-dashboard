@@ -14,20 +14,22 @@ import { Zap, Activity, Thermometer, Battery, ActivitySquare } from 'lucide-reac
 export default function DashboardPage() {
   const data = useBatteryData();
 
-  // --- 1. SET UP THE AI MEMORY ---
+  if (!data) {
+    return <div className="p-10 text-white">Loading dashboard...</div>;
+  }
+
   const [aiRange, setAiRange] = useState(data.rangeKm);
   const [aiSoh, setAiSoh] = useState(data.soh);
+  const [speed, setSpeed] = useState(60); 
 
-  // --- 2. CONNECT TO YOUR RENDER KITCHEN ---
   useEffect(() => {
     const fetchAIPredictions = async () => {
-      // ⚠️ PASTE YOUR RENDER URL RIGHT HERE ⚠️
+      // ⚠️ PASTE YOUR EXACT RENDER URL RIGHT HERE ⚠️
       const apiURL = "https://ml-models-5files.onrender.com/api/predict";
 
-      // We send the current sensor data to the AI
       const currentSensorData = {
         soc_percent: data.soc || 85.0,
-        speed_kmh: 60.5,
+        speed_kmh: speed,
         current_a: data.current || 22.0,
         batt_temp_c: data.temperature || 38.0,
         cycles: 320,
@@ -45,7 +47,6 @@ export default function DashboardPage() {
         const result = await response.json();
         
         if (result.status === "success") {
-          // Update the screen with the AI's math!
           setAiRange(result.data.predicted_range_km);
           setAiSoh(result.data.predicted_soh_percent);
         }
@@ -55,11 +56,10 @@ export default function DashboardPage() {
     };
 
     fetchAIPredictions();
-    const interval = setInterval(fetchAIPredictions, 5000); // Call AI every 5 seconds
+    const interval = setInterval(fetchAIPredictions, 5000);
     return () => clearInterval(interval);
-  }, [data.soc, data.current, data.temperature]);
+  }, [data.soc, data.current, data.temperature, speed]);
 
-  // --- 3. SHOW THE DESIGN ---
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -69,18 +69,35 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      <div style={{ padding: '20px', border: '1px solid #333', borderRadius: '10px', background: '#222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3 style={{ color: 'white', fontWeight: 'bold', margin: 0 }}>Live Speed Simulator</h3>
+          <p style={{ color: '#aaa', fontSize: '14px', margin: 0 }}>Drag to see how speed affects AI Range prediction</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <input 
+            type="range" 
+            min="0" 
+            max="120" 
+            value={speed} 
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            style={{ width: '200px', cursor: 'pointer' }}
+          />
+          <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#00ff00', width: '100px' }}>{speed} km/h</span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard 
-          title="State of Health" 
-          value={`${aiSoh}%`}
-          subtitle="AI Predicted"
-          icon={<ActivitySquare className="w-5 h-5" />} 
-          statusColor="blue"
+          title="State of Charge" 
+          value={`${data.soc}%`} 
+          subtitle={data.remainingTime}
+          icon={<Battery className="w-5 h-5" />} 
+          statusColor={data.soc > 20 ? 'green' : 'red'}
         />
         <KpiCard 
           title="State of Health" 
-          value={`${aiSoh}%`}  {/* 👈 NOW USING AI DATA */}
+          value={`${aiSoh}%`} 
           subtitle="AI Predicted"
           icon={<ActivitySquare className="w-5 h-5" />} 
           statusColor="blue"
@@ -108,23 +125,17 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
-        {/* Left Column */}
         <div className="xl:col-span-2 space-y-6">
-          <RangeCard range={aiRange} accuracy={data.rangeAccuracy} /> {/* 👈 NOW USING AI DATA */}
+          <RangeCard range={aiRange} accuracy={data.rangeAccuracy} /> 
           <BatteryChart data={data.history} />
           <ActivityLogs />
         </div>
-
-        {/* Right Column */}
         <div className="xl:col-span-1 space-y-6">
           <DeviceStatus connectionStatus={data.connectionStatus} systemRisk={data.systemRisk} />
           <AlertsPanel />
           <AIInsights />
         </div>
-
       </div>
     </div>
   );
